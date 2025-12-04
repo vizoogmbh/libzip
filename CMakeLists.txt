@@ -178,26 +178,18 @@ test_big_endian(WORDS_BIGENDIAN)
 if(NOT FETCH_ZLIB)
   find_package(ZLIB 1.1.2 REQUIRED)
 else()
-  include(FetchContent)
+  message(STATUS "Using zlib submodule instead of FetchContent")
+  set(zlib_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../zlib")
+  set(zlib_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/zlib-build")
+  add_subdirectory(${zlib_SOURCE_DIR} ${zlib_BINARY_DIR})
+  add_library(libZip_zlibFix INTERFACE)
+  target_include_directories(libZip_zlibFix INTERFACE "${zlib_BINARY_DIR}")
+  target_include_directories(libZip_zlibFix INTERFACE "${zlib_SOURCE_DIR}")
+  target_link_libraries(libZip_zlibFix INTERFACE zlibstatic)
 
-  message(STATUS "Fetching zlib")
-
-  FetchContent_Declare(zlib
-    GIT_REPOSITORY https://github.com/madler/zlib.git
-    GIT_TAG v1.2.11
-    )
-
-  FetchContent_GetProperties(zlib)
-  if(NOT zlib_POPULATED)
-      FetchContent_Populate(zlib)
-      add_subdirectory(${zlib_SOURCE_DIR} ${zlib_BINARY_DIR})
-      add_library(libZip_zlibFix INTERFACE)
-      target_include_directories(libZip_zlibFix INTERFACE "${zlib_BINARY_DIR}")
-      target_include_directories(libZip_zlibFix INTERFACE "${zlib_SOURCE_DIR}")
-      target_link_libraries(libZip_zlibFix INTERFACE zlibstatic)
+  if (NOT TARGET ZLIB::ZLIB)
       add_library(ZLIB::ZLIB ALIAS libZip_zlibFix)
   endif()
-
 endif()
 
 if(ENABLE_BZIP2)
